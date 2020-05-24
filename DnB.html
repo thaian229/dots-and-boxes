@@ -1,0 +1,684 @@
+<html>
+
+<head>
+
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+		integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+		integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+		crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+		integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+		crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+		integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+		crossorigin="anonymous"></script>
+
+	<title>Dots and Boxes</title>
+
+	<SCRIPT LANGUAGE="JavaScript">
+
+		function restart() {
+			document.querySelector("#aiScore").innerHTML = `<center>
+					Computer
+					<br>
+					<h1>0</h1>
+					<h1 id="aiEnd"></h1>
+				</center>`;
+			document.querySelector("#huScore").innerHTML = `<center>
+					Player
+					<br>
+					<h1>0</h1>
+					<h1 id="huEnd"></h1>
+				</center>`;
+			var i, j, x;
+			score[0] = 0;
+			score[1] = 0;
+			for (i = 0; i <= m; i++) {
+				x = 2 * i * nn + 1
+				for (j = 0; j < n; j++) {
+					document.images[x + 2 * j].src = n3.src;
+					hedge[i][j] = 0;
+				}
+			}
+			for (i = 0; i < m; i++) {
+				x = (2 * i + 1) * nn
+				for (j = 0; j <= n; j++) {
+					document.images[x + 2 * j].src = n3.src;
+					vedge[i][j] = 0;
+				}
+			}
+			for (i = 0; i < m; i++) {
+				x = (2 * i + 1) * nn + 1
+				for (j = 0; j < n; j++) {
+					document.images[x + 2 * j].src = n3.src;
+					box[i][j] = 0;
+				}
+			}
+			if (player != 1) makemove();
+		}
+
+		function hmove(i, j) {     //horizontal move by user
+			if (hedge[i][j] < 1) {
+				sethedge(i, j);
+				if (score[0] + score[1] == m * n) {
+					gameOver();
+				} else if (player == 0) makemove();
+			}
+		}
+
+		function vmove(i, j) {     //vertical move by user
+			if (vedge[i][j] < 1) {
+				setvedge(i, j);
+				if (score[0] + score[1] == m * n) {
+					gameOver();
+				} else if (player == 0) makemove();
+			}
+		}
+
+		function realtimeScore() {
+			document.querySelector("#aiScore").innerHTML = `<center>
+					Computer
+					<br>
+					<h1>${score[0]}</h1>
+					<h1 id="aiEnd"></h1>
+				</center>`;
+			document.querySelector("#huScore").innerHTML = `<center>
+					Player
+					<br>
+					<h1>${score[1]}</h1>
+					<h1 id="huEnd"></h1>
+				</center>`;
+		}
+
+		function sethedge(x, y) {      //Sets horizontal edge
+			if (score[0] + score[1] < m * n) {
+				hedge[x][y] = 1;
+				if (x > 0) box[x - 1][y]++;
+				if (x < m) box[x][y]++;
+				document.images[2 * x * nn + 2 * y + 1].src = n2.src;
+				checkh(x, y)
+				player = 1 - player;
+			}
+		}
+
+		function setvedge(x, y) {      //Sets vertical edge
+			if (score[0] + score[1] < m * n) {
+				vedge[x][y] = 1;
+				if (y > 0) box[x][y - 1]++;
+				if (y < n) box[x][y]++;
+				document.images[(2 * x + 1) * nn + 2 * y].src = n2.src;
+				checkv(x, y)
+				player = 1 - player;
+			}
+		}
+
+		function takeedge(zz, x, y) {    //Set hedge if zz=1 and vedge if zz=2.
+			if (zz > 1) setvedge(x, y);
+			else sethedge(x, y);
+		}
+
+		function makemove() {
+			takesafe3s();
+			if (sides3()) {
+				if (sides01()) {
+					takeall3s();
+					takeedge(zz, x, y);
+				} else {
+					sac(u, v)
+				}
+				if (score[0] + score[1] == m * n) {
+					gameOver();
+				}
+			} else if (sides01()) takeedge(zz, x, y);
+			else if (singleton()) takeedge(zz, x, y);
+			else if (doubleton()) takeedge(zz, x, y);
+			else makeanymove();
+		}
+
+		function takesafe3s() {     //Take all singleton and doubleton 3's.
+			for (var i = 0; i < m; i++) {
+				for (var j = 0; j < n; j++) {
+					if (box[i][j] == 3) {
+						if (vedge[i][j] < 1) {
+							if (j == 0 || box[i][j - 1] != 2) setvedge(i, j);
+						} else if (hedge[i][j] < 1) {
+							if (i == 0 || box[i - 1][j] != 2) sethedge(i, j);
+						} else if (vedge[i][j + 1] < 1) {
+							if (j == n - 1 || box[i][j + 1] != 2) setvedge(i, j + 1);
+						} else {
+							if (i == m - 1 || box[i + 1][j] != 2) sethedge(i + 1, j);
+						}
+					}
+				}
+			}
+		}
+
+		function sides3() {     //Returns true and u,v if there is a box(u,v)=3.
+			for (var i = 0; i < m; i++) {
+				for (var j = 0; j < n; j++) {
+					if (box[i][j] == 3) {
+						u = i;
+						v = j;
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		function takeall3s() {
+			while (sides3()) takebox(u, v);
+		}
+
+		function sides01() {     //Returns true and zz,x,y if there is a safe edge(x,y).
+			if (Math.random() < .5) zz = 1; else zz = 2;  //zz=1 if horizontal, zz=2 if vertical
+			var i = Math.floor(m * Math.random());
+			var j = Math.floor(n * Math.random());
+			if (zz == 1) {
+				if (randhedge(i, j)) return true;
+				else {
+					zz = 2;
+					if (randvedge(i, j)) return true;
+				}
+			} else {
+				if (randvedge(i, j)) return true;
+				else {
+					zz = 1;
+					if (randhedge(i, j)) return true;
+				}
+			}
+			return false;
+		}
+
+		function safehedge(i, j) {     //Returns true if (i,j) is a safe hedge
+			if (hedge[i][j] < 1) {
+				if (i == 0) {
+					if (box[i][j] < 2) return true
+				} else if (i == m) {
+					if (box[i - 1][j] < 2) return true
+				}
+				else if (box[i][j] < 2 && box[i - 1][j] < 2) return true;
+			}
+			return false
+		}
+
+		function safevedge(i, j) {
+			if (vedge[i][j] < 1) {
+				if (j == 0) {
+					if (box[i][j] < 2) return true
+				} else if (j == n) {
+					if (box[i][j - 1] < 2) return true
+				}
+				else if (box[i][j] < 2 && box[i][j - 1] < 2) return true;
+			}
+			return false
+		}
+
+		function randhedge(i, j) {
+			x = i;
+			y = j;
+			do {
+				if (safehedge(x, y)) return true;
+				else {
+					y++;
+					if (y == n) {
+						y = 0;
+						x++;
+						if (x > m) x = 0;
+					}
+				}
+			} while (x != i || y != j);
+			return false
+		}
+
+		function randvedge(i, j) {
+			x = i;
+			y = j;
+			do {
+				if (safevedge(x, y)) return true;
+				else {
+					y++;
+					if (y > n) {
+						y = 0;
+						x++;
+						if (x == m) x = 0;
+					}
+				}
+			} while (x != i || y != j);
+			return false
+		}
+
+		function singleton() {     //Returns true and zz,x,y if edge(x,y) gives exactly
+			var numb;              //1 square away
+			for (var i = 0; i < m; i++) {
+				for (var j = 0; j < n; j++) {
+					if (box[i][j] == 2) {
+						numb = 0;
+						if (hedge[i][j] < 1) {
+							if (i < 1 || box[i - 1][j] < 2) numb++;
+						}
+						zz = 2;
+						if (vedge[i][j] < 1) {
+							if (j < 1 || box[i][j - 1] < 2) numb++;
+							if (numb > 1) {
+								x = i;
+								y = j;
+								return true;
+							}
+						}
+						if (vedge[i][j + 1] < 1) {
+							if (j + 1 == n || box[i][j + 1] < 2) numb++;
+							if (numb > 1) {
+								x = i;
+								y = j + 1;
+								return true;
+							}
+						}
+						zz = 1;
+						if (hedge[i + 1][j] < 1) {
+							if (i + 1 == m || box[i + 1][j] < 2) numb++;
+							if (numb > 1) {
+								x = i + 1;
+								y = j;
+								return true;
+							}
+						}
+					}
+				}
+			}
+			return false;
+		}
+
+		function doubleton() {     //Returns true and zz,x,y if edge(x,y) gives away 
+			zz = 2;                  //exactly 2 squares
+			for (i = 0; i < m; i++) {
+				for (j = 0; j < n - 1; j++) {
+					if (box[i][j] == 2 && box[i][j + 1] == 2 && vedge[i][j + 1] < 1) {
+						if (ldub(i, j) && rdub(i, j + 1)) {
+							x = i;
+							y = j + 1;
+							return true;
+						}
+					}
+				}
+			}
+			zz = 1;
+			for (j = 0; j < n; j++) {
+				for (i = 0; i < m - 1; i++) {
+					if (box[i][j] == 2 && box[i + 1][j] == 2 && hedge[i + 1][j] < 1) {
+						if (udub(i, j) && ddub(i + 1, j)) {
+							x = i + 1;
+							y = j;
+							return true;
+						}
+					}
+				}
+			}
+			return false
+		}
+
+		function ldub(i, j) {      //Given box(i,j)=2 and vedge(i,j+1)=0, returns true
+			if (vedge[i][j] < 1) {      //if the other free edge leads to a box<2
+				if (j < 1 || box[i][j - 1] < 2) return true;
+			} else if (hedge[i][j] < 1) {
+				if (i < 1 || box[i - 1][j] < 2) return true;
+			} else if (i == m - 1 || box[i + 1][j] < 2) {
+				return true
+			}
+			return false
+		}
+
+		function rdub(i, j) {
+			if (vedge[i][j + 1] < 1) {
+				if (j + 1 == n || box[i][j + 1] < 2) return true;
+			} else if (hedge[i][j] < 1) {
+				if (i < 1 || box[i - 1][j] < 2) return true;
+			} else if (i + 1 == m || box[i + 1][j] < 2) {
+				return true
+			}
+			return false
+		}
+
+		function udub(i, j) {
+			if (hedge[i][j] < 1) {
+				if (i < 1 || box[i - 1][j] < 2) return true;
+			} else if (vedge[i][j] < 1) {
+				if (j < 1 || box[i][j - 1] < 2) return true;
+			} else if (j == n - 1 || box[i][j + 1] < 2) {
+				return true
+			}
+			return false
+		}
+
+		function ddub(i, j) {
+			if (hedge[i + 1][j] < 1) {
+				if (i == m - 1 || box[i + 1][j] < 2) return true;
+			} else if (vedge[i][j] < 1) {
+				if (j < 1 || box[i][j - 1] < 2) return true;
+			} else if (j == n - 1 || box[i][j + 1] < 2) {
+				return true
+			}
+			return false
+		}
+
+		function sac(i, j) {     //sacrifices two squares if there are still 3's
+			count = 0;
+			loop = false;
+			incount(0, i, j);
+			if (!loop) takeallbut(i, j);
+			if (count + score[0] + score[1] == m * n) {
+				takeall3s()
+			} else {
+				if (loop) {
+					count = count - 2;
+				}
+				outcount(0, i, j);
+				i = m;
+				j = n
+			}
+		}
+
+		function incount(k, i, j) {  //enter with box[i][j]=3 and k=0
+			count++;               //returns count = number in chain starting at i,j
+			if (k != 1 && vedge[i][j] < 1) {     //k=1,2,3,4 means skip left,up,right,down.
+				if (j > 0) {
+					if (box[i][j - 1] > 2) {
+						count++;
+						loop = true;
+					} else if (box[i][j - 1] > 1) incount(3, i, j - 1);
+				}
+			} else if (k != 2 && hedge[i][j] < 1) {
+				if (i > 0) {
+					if (box[i - 1][j] > 2) {
+						count++;
+						loop = true
+					} else if (box[i - 1][j] > 1) incount(4, i - 1, j);
+				}
+			} else if (k != 3 && vedge[i][j + 1] < 1) {
+				if (j < n - 1) {
+					if (box[i][j + 1] > 2) {
+						count++;
+						loop = true
+					} else if (box[i][j + 1] > 1) incount(1, i, j + 1);
+				}
+			} else if (k != 4 && hedge[i + 1][j] < 1) {
+				if (i < m - 1) {
+					if (box[i + 1][j] > 2) {
+						count++;
+						loop = true
+					} else if (box[i + 1][j] > 1) incount(2, i + 1, j);
+				}
+			}
+		}
+
+		function takeallbut(x, y) {
+			while (sides3not(x, y)) {
+				takebox(u, v);
+			}
+		}
+
+		function sides3not(x, y) {
+			for (var i = 0; i < m; i++) {
+				for (var j = 0; j < n; j++) {
+					if (box[i][j] == 3) {
+						if (i != x || j != y) {
+							u = i;
+							v = j;
+							return true;
+						}
+					}
+				}
+			}
+			return false
+		}
+
+		function takebox(i, j) {
+			if (hedge[i][j] < 1) sethedge(i, j);
+			else if (vedge[i][j] < 1) setvedge(i, j);
+			else if (hedge[i + 1][j] < 1) sethedge(i + 1, j);
+			else setvedge(i, j + 1);
+		}
+
+		function outcount(k, i, j) {     //Takes all but count-2 squares and exits
+			if (count > 0) {
+				if (k != 1 && vedge[i][j] < 1) {
+					if (count != 2) setvedge(i, j);
+					count--;
+					outcount(3, i, j - 1)
+				} else if (k != 2 && hedge[i][j] < 1) {
+					if (count != 2) sethedge(i, j);
+					count--;
+					outcount(4, i - 1, j)
+				} else if (k != 3 && vedge[i][j + 1] < 1) {
+					if (count != 2) setvedge(i, j + 1);
+					count--;
+					outcount(1, i, j + 1)
+				} else if (k != 4 && hedge[i + 1][j] < 1) {
+					if (count != 2) sethedge(i + 1, j);
+					count--;
+					outcount(2, i + 1, j)
+				}
+			}
+		}
+
+		function makeanymove() {
+			x = -1;
+			for (i = 0; i <= m; i++) {
+				for (j = 0; j < n; j++) {
+					if (hedge[i][j] < 1) {
+						x = i;
+						y = j;
+						i = m + 1;
+						j = n
+					}
+				}
+			}
+			if (x < 0) {
+				for (i = 0; i < m; i++) {
+					for (j = 0; j <= n; j++) {
+						if (vedge[i][j] < 1) {
+							x = i;
+							y = j;
+							i = m;
+							j = n + 1;
+						}
+					}
+				}
+				setvedge(x, y);
+			} else {
+				sethedge(x, y);
+			}
+			if (player == 0) makemove();
+		}
+
+		function checkh(x, y) {     //check if hedge move scores any points
+			var hit = 0;
+			if (x > 0) {
+				if (box[x - 1][y] == 4) {
+					var uu = x - 1;
+					document.images[(2 * uu + 1) * nn + 2 * y + 1].src = flag[player];
+					score[player]++;
+					realtimeScore();
+					hit = 1;
+				}
+			}
+			if (x < m) {
+				if (box[x][y] == 4) {
+					document.images[(2 * x + 1) * nn + 2 * y + 1].src = flag[player];
+					score[player]++;
+					realtimeScore();
+
+					hit = 1;
+				}
+			}
+			if (hit > 0) player = 1 - player;
+		}
+
+		function checkv(x, y) {
+			var hit = 0;
+			if (y > 0) {
+				if (box[x][y - 1] == 4) {
+					var vv = y - 1;
+					document.images[(2 * x + 1) * nn + 2 * vv + 1].src = flag[player];
+					score[player]++;
+					realtimeScore();
+
+					hit = 1;
+				}
+			}
+			if (y < n) {
+				if (box[x][y] == 4) {
+					document.images[(2 * x + 1) * nn + 2 * y + 1].src = flag[player];
+					score[player]++;
+					realtimeScore();
+
+					hit = 1;
+				}
+			}
+			if (hit > 0) player = 1 - player;
+		}
+
+		function gameOver() {
+			if (score[0] > score[1]) {
+				document.querySelector("#aiEnd").innerHTML = "WIN";
+				document.querySelector("#huEnd").innerHTML = "LOSE";
+			} else if (score[0] < score[1]) {
+				document.querySelector("#aiEnd").innerHTML = "LOSE";
+				document.querySelector("#huEnd").innerHTML = "WIN";
+			} else {
+				document.querySelector("#aiEnd").innerHTML = "DRAW";
+				document.querySelector("#huEnd").innerHTML = "DRAW";
+			}
+		}
+
+ //  End -->
+	</script>
+</head>
+
+<body>
+	<nav class="navbar navbar-light bg-light">
+		<a class="navbar-brand" href="">Dots and Boxes</a>
+		<INPUT TYPE="button" VALUE="Reset" onClick="restart()">
+	</nav>
+
+
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-3 score" id="huScore">
+				<center>
+					Player
+					<br>
+					<h1>0</h1>
+					<h1 id="huEnd"></h1>
+
+				</center>
+
+			</div>
+			<SCRIPT LANGUAGE="JavaScript">
+
+				var m;
+				var n;
+
+				n0 = new Image();
+				n1 = new Image();
+				n2 = new Image();
+				n3 = new Image();
+
+				n0.src = "red.gif";
+				n1.src = "blue.png";
+				n2.src = "black.gif";
+				n3.src = "blank.gif";
+
+				var flag = [n0.src, n1.src];
+				var player = 1;
+				var score = [0, 0];
+				var hedge = [];
+				var vedge = [];
+				var box = [];
+				var nn, x, y, zz, count, loop, u, v;
+
+				function getInput() {
+					do {
+						m = window.prompt("Enter size between 3 and 9.", "4");
+					} while (m < 3 || m > 9);
+					do {
+						n = m
+					} while (n < 3 || n > 9);
+					for (var i = 0; i <= m; i++) {
+						hedge[i] = [];
+						for (var j = 0; j < n; j++) hedge[i][j] = 0;
+					}
+					for (i = 0; i < m; i++) {
+						vedge[i] = [];
+						for (j = 0; j <= n; j++) vedge[i][j] = 0;
+					}
+					for (i = 0; i < m; i++) {
+						box[i] = [];
+						for (j = 0; j < n; j++) box[i][j] = 0;
+					}
+					nn = 2 * n + 1;
+				}
+				getInput();
+
+				var vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+				document.write('<center class="col-6">');
+				document.write('<form name="f">');
+				document.write('<table id="playGround" bgcolor=#ffffff border="0" width="100%" cellpadding="0" cellspacing="0"><tr>')
+				for (i = 0; i < m; i++) {
+					for (j = 0; j < n; j++) {
+						document.write('<td align=center><span class="dot"><img src="black.gif" border=0 width=0 height=0></span></td>');
+						document.write('<td align=center><a href="javascript:hmove(' + i + ',' + j + ')"'
+							+ ' onMouseover="javascript:if (hedge[' + i + '][' + j + ']<1) document.he' + i + j + '.src=n1.src"'
+							+ ' onMouseout="javascript:if (hedge[' + i + '][' + j + ']<1) document.he' + i + j + '.src=n3.src">'
+							+ '<img src="blank.gif" name="he' + i + j + '" border=0 width=' + ((0.9 * vw / 2 - 16 * (m)) / m) + ' height=8></a></td>');
+					}
+					document.write('<td align=center><span class="dot"><img src="black.gif" border=0 width=0 height=0></span></td></tr><tr>');
+					for (j = 0; j < n; j++) {
+						document.write('<td align=center><a href="javascript:vmove(' + i + ',' + j + ')"'
+							+ ' onMouseover="javascript:if (vedge[' + i + '][' + j + ']<1) document.ve' + i + j + '.src=n1.src"'
+							+ ' onMouseout="javascript:if (vedge[' + i + '][' + j + ']<1) document.ve' + i + j + '.src=n3.src">'
+							+ '<img src="blank.gif" name="ve' + i + j + '" border=0 width=8 height=' + ((0.9 * vw / 2 - 16 * (m)) / m) + '></a></td>');
+						document.write('<td align=center><img class="blankSquare" name="sq' + i + j
+							+ '" src="blank.gif" border=0 width="100%"></td>');
+					}
+					document.write('<td align=center><a href="javascript:vmove(' + i + ',' + j + ')"'
+						+ ' onMouseover="javascript:if (vedge[' + i + '][' + j + ']<1) document.ve' + i + j + '.src=n1.src"'
+						+ ' onMouseout="javascript:if (vedge[' + i + '][' + j + ']<1) document.ve' + i + j + '.src=n3.src">'
+						+ '<img src="blank.gif" name="ve' + i + j + '" border=0 width=8 height=' + ((0.9 * vw / 2 - 16 * (m)) / m) + '></a></td></tr>');
+				}
+				for (j = 0; j < n; j++) {
+					document.write('<td align=center><span class="dot"><img src="black.gif" border=0 width=0 height=0></span></td>');
+					document.write('<td align=center><a href="javascript:hmove(' + i + ',' + j + ')"'
+						+ ' onMouseover="javascript:if (hedge[' + i + '][' + j + ']<1) document.he' + i + j + '.src=n1.src"'
+						+ ' onMouseout="javascript:if (hedge[' + i + '][' + j + ']<1) document.he' + i + j + '.src=n3.src">'
+						+ '<img src="blank.gif" name="he' + i + j + '" border=0 width=' + ((0.9 * vw / 2 - 16 * (m)) / m) + ' height=8></a></td>');
+				}
+				document.write('<td align=center><span class="dot"><img src="black.gif" border=0 width=0 height=0></span></td></tr>');
+				document.write('</table>');
+				document.write('</form>');
+
+				document.write('</center>');
+
+
+
+			</script>
+
+			<div class="col-3 score" id="aiScore">
+				<center>
+					Computer
+					<br>
+					<h1>0</h1>
+					<h1 id="aiEnd"></h1>
+
+				</center>
+
+			</div>
+		</div>
+
+	</div>
+
+</body>
+
+</html>

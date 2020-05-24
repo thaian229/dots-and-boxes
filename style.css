@@ -1,0 +1,33 @@
+.dot {
+  padding: 0px;
+  margin: 0px;
+  position: relative;
+  z-index: 9998 !important;
+  height: 16px;
+  width: 16px;
+  background-color: gray;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+#playGround {
+  padding: 20px;
+  z-index: 999999999999;
+}
+
+.container-fluid {
+  margin-top: 50px;
+}
+
+.score {
+  padding-top: 100px;
+}
+
+#aiEnd, #huEnd{
+    margin-top: 300px;
+}
+/* 
+.blankSquare{
+    margin-top: 9px;
+    margin-bottom: 9px;
+} */
